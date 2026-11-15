@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <!-- html2pdf.js untuk eksport PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- html2canvas untuk eksport gambar PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -22,57 +22,65 @@
         @media print {
             @page {
                 size: A4 landscape;
-                margin: 4mm;
+                margin: 8mm;
             }
             .no-print {
                 display: none !important;
             }
-            body {
+            html, body {
+                width: 1120px !important;
+                min-width: 1120px !important;
                 background-color: #ffffff !important;
                 color: #000000 !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             .print-container {
                 box-shadow: none !important;
-                border: 2px solid #000000 !important;
-                padding: 6px !important;
-                margin: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                zoom: 0.78;
+                border: 2.5px solid #000000 !important;
+                padding: 14px !important;
+                margin: 0 auto !important;
+                width: 1110px !important;
+                max-width: 1110px !important;
+                zoom: 1 !important;
             }
-        }
-        /* Kelas bantuan semasa eksport PDF supaya muat 1 muka surat A4 */
-        .pdf-fit-mode {
-            width: 1260px !important;
-            max-width: 1260px !important;
-            padding: 8px !important;
-            margin: 0 !important;
-            box-shadow: none !important;
-            border-radius: 6px !important;
-        }
-        .pdf-fit-mode .flex.flex-col.gap-2 {
-            gap: 4px !important;
-        }
-        .pdf-fit-mode .gap-1\.5 {
-            gap: 4px !important;
-        }
-        .pdf-fit-mode .p-2 {
-            padding: 5px !important;
-        }
-        .pdf-fit-mode .p-1\.5 {
-            padding: 4px !important;
-        }
-        .pdf-fit-mode .min-h-\[115px\] {
-            min-height: 76px !important;
-        }
-        .pdf-fit-mode textarea {
-            rows: 1;
-            min-height: 34px !important;
-            max-height: 42px !important;
+            .print-container .flex.flex-col.gap-2 {
+                gap: 12px !important;
+            }
+            .print-container .gap-1\.5 {
+                gap: 10px !important;
+            }
+            .print-container .min-h-\[115px\] {
+                min-height: 150px !important;
+            }
+            .print-container .text-\[10px\] {
+                font-size: 13px !important;
+                line-height: 1.35 !important;
+            }
+            .print-container .text-\[9px\] {
+                font-size: 12px !important;
+                line-height: 1.35 !important;
+            }
+            .print-container .text-\[8px\] {
+                font-size: 11px !important;
+                line-height: 1.3 !important;
+            }
+            .print-container input[type="text"] {
+                font-size: 13px !important;
+                padding-top: 4px !important;
+                padding-bottom: 4px !important;
+            }
+            .print-container textarea {
+                font-size: 13px !important;
+                min-height: 90px !important;
+                resize: none !important;
+            }
+            .print-page-break {
+                break-before: page !important;
+                page-break-before: always !important;
+            }
         }
         ::-webkit-scrollbar {
             width: 6px;
@@ -128,11 +136,8 @@
             <button onclick="saveData()" class="px-2 py-1 bg-black hover:bg-neutral-800 text-white border border-black font-bold text-[10px] rounded-lg transition flex items-center gap-1">
                 <i class="fa-solid fa-floppy-disk"></i> Simpan
             </button>
-            <button onclick="exportPDF()" class="px-2 py-1 bg-black hover:bg-neutral-800 text-white border border-black font-bold text-[10px] rounded-lg transition flex items-center gap-1">
-                <i class="fa-solid fa-file-pdf"></i> PDF Sesi Ini
-            </button>
-            <button onclick="window.print()" class="px-2 py-1 bg-white hover:bg-neutral-100 text-black border border-black font-bold text-[10px] rounded-lg transition flex items-center gap-1">
-                <i class="fa-solid fa-print"></i> Cetak
+            <button onclick="saveAsPicture()" class="px-2 py-1 bg-white hover:bg-neutral-100 text-black border border-black font-bold text-[10px] rounded-lg transition flex items-center gap-1">
+                <i class="fa-solid fa-image"></i> Save Gambar
             </button>
         </div>
     </header>
@@ -452,7 +457,7 @@ function getOrCreateSheet() {
             </div>
 
             <!-- KOTAK KECIL MEMANJANG: Laluan -->
-            <div class="bg-neutral-100 border-2 border-black rounded-md py-1 px-2 text-center">
+            <div class="bg-neutral-100 border-2 border-black rounded-md py-1 px-2 text-center print-page-break">
                 <span class="text-[9px] font-black text-black uppercase tracking-widest flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-arrows-left-right text-black"></i> Laluan
                 </span>
@@ -1101,56 +1106,110 @@ function getOrCreateSheet() {
             showToast(`Semua data ${label} telah dikosongkan.`);
         }
 
-        function exportPDF() {
-            const label = currentSession === 'pagi' ? 'Sesi_Pagi' : (currentSession === 'petang' ? 'Sesi_Petang' : 'Tambahan_Kerja');
-            const yr = (allSessionsData.eventYear || '2026').trim() || '2026';
-            const fileName = `Pelan_Susun_Atur_Ihtifal_${yr}_${label}.pdf`;
-            showToast(`Menjana fail PDF 1 muka surat A4 (${label.replace('_', ' ')})...`);
-            
-            const element = document.getElementById('pdf-content');
-            element.classList.add('pdf-fit-mode');
+        async function saveAsPicture() {
+            const sourceEl = document.getElementById('pdf-content');
+            if (!sourceEl) return;
 
-            // Guna html2pdf untuk menukar DOM kepada kanvas, kemudian muat turun sebagai 1 helaian A4 Landscape
-            const worker = html2pdf().from(element).set({
-                margin: 0,
-                filename: fileName,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 1280, scrollY: 0 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape', compress: true }
+            if (typeof html2canvas === 'undefined') {
+                showToast('Pustaka gambar sedang dimuatkan, sila cuba sebentar lagi.');
+                return;
+            }
+
+            showToast('Menjana gambar pelan berkualiti tinggi...');
+
+            // Cipta bekas sementara berlebar penuh desktop supaya susunan kolum sama sebiji seperti web
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'fixed';
+            wrapper.style.left = '-10000px';
+            wrapper.style.top = '0';
+            wrapper.style.width = '1260px';
+            wrapper.style.backgroundColor = '#ffffff';
+            wrapper.style.padding = '16px';
+            wrapper.style.zIndex = '-9999';
+
+            const cloneEl = sourceEl.cloneNode(true);
+            cloneEl.style.width = '1228px';
+            cloneEl.style.maxWidth = '1228px';
+            cloneEl.style.margin = '0 auto';
+
+            // Buang butang no-print pada klon gambar
+            cloneEl.querySelectorAll('.no-print').forEach(el => el.remove());
+
+            // Tukar input teks kepada paparan teks statik supaya tidak terpotong di dalam gambar
+            const origInputs = sourceEl.querySelectorAll('input');
+            const cloneInputs = cloneEl.querySelectorAll('input');
+            origInputs.forEach((inp, idx) => {
+                const cInp = cloneInputs[idx];
+                if (!cInp) return;
+                const val = inp.value || '';
+                const span = document.createElement('div');
+                span.textContent = val || (inp.placeholder || '');
+                span.className = cInp.className;
+                span.style.minHeight = '18px';
+                span.style.display = 'flex';
+                span.style.alignItems = 'center';
+                if (inp.id === 'header-year-input' || inp.id === 'plan-year-input') {
+                    span.style.justifyContent = 'center';
+                    span.style.display = 'inline-flex';
+                }
+                if (!val) {
+                    span.style.color = '#737373';
+                } else {
+                    span.style.color = '#000000';
+                }
+                cInp.parentNode.replaceChild(span, cInp);
             });
 
-            worker.toCanvas().get('canvas').then(function(canvas) {
-                const jsPDFConstructor = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : window.jsPDF;
-                const pdf = new jsPDFConstructor({
-                    unit: 'mm',
-                    format: 'a4',
-                    orientation: 'landscape',
-                    compress: true
+            // Tukar textarea kepada kotak teks penuh supaya semua nota kelihatan
+            const origTextareas = sourceEl.querySelectorAll('textarea');
+            const cloneTextareas = cloneEl.querySelectorAll('textarea');
+            origTextareas.forEach((ta, idx) => {
+                const cTa = cloneTextareas[idx];
+                if (!cTa) return;
+                const val = ta.value || '';
+                const div = document.createElement('div');
+                div.textContent = val || (ta.placeholder || '');
+                div.className = cTa.className;
+                div.style.whiteSpace = 'pre-wrap';
+                div.style.minHeight = '54px';
+                if (!val) {
+                    div.style.color = '#737373';
+                } else {
+                    div.style.color = '#000000';
+                }
+                cTa.parentNode.replaceChild(div, cTa);
+            });
+
+            wrapper.appendChild(cloneEl);
+            document.body.appendChild(wrapper);
+
+            try {
+                const canvas = await html2canvas(wrapper, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    width: 1260,
+                    windowWidth: 1280
                 });
 
-                const pageWidth = pdf.internal.pageSize.getWidth();   // 297mm (A4 Landscape)
-                const pageHeight = pdf.internal.pageSize.getHeight(); // 210mm (A4 Landscape)
-                const margin = 4; // 4mm jidar keliling
-                const maxW = pageWidth - (margin * 2);
-                const maxH = pageHeight - (margin * 2);
+                const yearVal = (allSessionsData.eventYear || '2026').trim() || '2026';
+                const sessionLabel = currentSession === 'pagi' ? 'Sesi_Pagi' : (currentSession === 'petang' ? 'Sesi_Petang' : 'Tambahan_Kerja');
+                const fileName = `Pelan_Ihtifal_${sessionLabel}_${yearVal}.png`;
 
-                const ratio = Math.min(maxW / canvas.width, maxH / canvas.height);
-                const finalW = canvas.width * ratio;
-                const finalH = canvas.height * ratio;
-                const offsetX = (pageWidth - finalW) / 2;
-                const offsetY = (pageHeight - finalH) / 2;
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
 
-                const imgData = canvas.toDataURL('image/jpeg', 0.98);
-                pdf.addImage(imgData, 'JPEG', offsetX, offsetY, finalW, finalH);
-                pdf.save(fileName);
-
-                element.classList.remove('pdf-fit-mode');
-                showToast('PDF 1 muka surat A4 berjaya dimuat turun!');
-            }).catch(function(err) {
-                console.error('Ralat eksport PDF:', err);
-                element.classList.remove('pdf-fit-mode');
-                showToast('Gagal menjana PDF. Sila cuba butang Cetak > Save as PDF.');
-            });
+                showToast('Gambar pelan (PNG) berjaya dimuat turun!');
+            } catch (err) {
+                console.error('Ralat menjana gambar:', err);
+                showToast('Gagal menjana gambar. Sila cuba lagi.');
+            } finally {
+                document.body.removeChild(wrapper);
+            }
         }
 
         window.onload = function() {
