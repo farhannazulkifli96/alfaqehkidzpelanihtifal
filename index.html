@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pelan Susun Atur Rujukan 2D (Sesi Pagi & Petang) - Majlis Ihtifal Tadika Al Faqeh Kidz 2026</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome untuk ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- html2pdf.js untuk eksport PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #000000;
+            font-weight: 700;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .print-container {
+                box-shadow: none !important;
+                border: 2px solid #000000 !important;
+                padding: 4px !important;
+                margin: 0 !important;
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-2 bg-slate-100 text-black font-bold text-[10px]">
+
+    <!-- Header / Navigasi Atas -->
+    <header class="max-w-[1280px] mx-auto mb-2 bg-white rounded-xl shadow-sm border-2 border-black p-2.5 flex flex-col lg:flex-row items-center justify-between gap-2.5 no-print">
+        <div>
+            <span class="inline-block px-2 py-0.5 bg-white text-black border border-black font-bold text-[9px] rounded-full uppercase tracking-wider mb-0.5">Pelan Susun Atur Rujukan 2D (2 Sesi)</span>
+            <h1 class="text-sm md:text-base font-black text-black flex items-center gap-1">
+                <span>Majlis Ihtifal Tadika Al Faqeh Kidz</span>
+                <input type="text" id="header-year-input" value="2026" maxlength="4" oninput="updateEventYear(this.value)" title="Klik untuk tukar tahun" class="w-14 bg-neutral-100 hover:bg-neutral-200 focus:bg-white border border-black rounded px-1.5 py-0 text-center font-black text-black focus:outline-none">
+            </h1>
+        </div>
+        <!-- Penukar Tab Sesi Pagi / Petang / Tambahan Kerja -->
+        <div class="flex flex-wrap items-center justify-center bg-neutral-100 p-1 rounded-xl border-2 border-black gap-1">
+            <button id="tab-pagi" onclick="switchSession('pagi')" class="px-3.5 py-1.5 rounded-lg font-black text-[11px] transition-all flex items-center gap-1.5 bg-black text-white">
+                <i class="fa-solid fa-sun"></i> Sesi Pagi
+            </button>
+            <button id="tab-petang" onclick="switchSession('petang')" class="px-3.5 py-1.5 rounded-lg font-bold text-[11px] transition-all flex items-center gap-1.5 text-black hover:bg-neutral-200">
+                <i class="fa-solid fa-cloud-sun"></i> Sesi Petang
+            </button>
+            <button id="tab-tambahan" onclick="switchSession('tambahan')" class="px-3.5 py-1.5 rounded-lg font-bold text-[11px] transition-all flex items-center gap-1.5 text-black hover:bg-neutral-200">
+                <i class="fa-solid fa-clipboard-list"></i> Tambahan Kerja
+            </button>
+        </div>
+
+        <!-- Butang Tindakan -->
+        <div class="flex flex-wrap items-center justify-center gap-1.5">
+            <button onclick="openSheetsModal()" id="btn-sheets-status" class="px-2 py-1 bg-white hover:bg-neutral-100 text-black border border-black font-bold text-[10px] rounded-lg transition flex items-center gap-1" title="Tetapan sambungan Google Sheets">
+                <i class="fa-solid fa-table"></i> <span id="sheets-status-text">Google Sheets: Offline</span>
+            </button>
+            <button onclick="refreshFromSheets()" id="btn-refresh-sheets" class="px-2 py-1 bg-white hover:bg-neutral-100 text-black border border-black font-bold text-[10px] rounded-lg transition flex items-center gap-1" title="Muat semula data terkini dari Google Sheets">
+                <i id="refresh-icon" class="fa-solid fa-arrows-rotate"></i> Refresh
+            </button>
+            <button onclick="copyToOtherSession()" id="btn-copy-session" class="px-2 py-1 bg-white hover:bg-neutral-100 text-black border border-black font-bold text-[10px] rounded-lg transition flex items-center gap-1" title="Salin nama guru dari sesi semasa ke sesi satu lagi">
+                <i class="fa-solid fa-copy"></i> <span id="copy-btn-text">Salin ke Petang</span>
+            </button>
+            <button onclick="openResetModal()" class="px-2 py-1 bg-white hover:bg-neutral-100 text-black border border-black font-bold text-[10px] rounded-lg transition flex items-center gap-1">
+                <i class="fa-solid fa-rotate-left"></i> Reset Sesi
+            </button>
+            <button onclick="saveData()" class="px-2 py-1 bg-black hover:bg-neutral-800 text-white border border-black font-bold text-[10px] rounded-lg transition flex items-center gap-1">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan
+            </button>
+            <button onclick="exportPDF()" class="px-2 py-1 bg-black hover:bg-neutral-800 text-white border border-black font-bold text-[10px] rounded-lg transition flex items-center gap-1">
+                <i class="fa-solid fa-file-pdf"></i> PDF Sesi Ini
+            </button>
+            <button onclick="window.print()" class="px-2 py-1 bg-white hover:bg-neutral-100 text-black border border-black font-bold text-[10px] rounded-lg transition flex items-center gap-1">
+                <i class="fa-solid fa-print"></i> Cetak
+            </button>
+        </div>
+    </header>
+
+    <!-- Modal Tetapan Google Sheets -->
+    <div id="sheets-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4 no-print">
+        <div class="bg-white border-2 border-black rounded-xl max-w-lg w-full p-4 shadow-2xl text-black max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b-2 border-black pb-2 mb-3">
+                <div class="flex items-center gap-2 font-black text-xs uppercase">
+                    <i class="fa-solid fa-table"></i>
+                    <span>Sambungan Google Sheets</span>
+                </div>
+                <button onclick="closeSheetsModal()" class="text-black hover:bg-neutral-200 px-2 py-0.5 rounded font-black text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-2.5 text-[10px]">
+                <div>
+                    <label class="block font-black uppercase mb-0.5">1. URL Web App Google Apps Script</label>
+                    <input type="text" id="gs-url-input" value="https://script.google.com/macros/s/AKfycbwmBhbhL4PvNRg8hw4cNE05lFSC_g2xQDrR1u9CLRexFMYYDJun08sUTouqHXGcCmELLw/exec" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="w-full border border-black rounded-lg px-2.5 py-1.5 font-bold bg-neutral-50 focus:bg-white focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-black uppercase mb-0.5">2. Nama Rekod / Tab Rujukan</label>
+                    <input type="text" id="gs-record-id" value="ihtifal_2026_utama" class="w-full border border-black rounded-lg px-2.5 py-1.5 font-bold bg-neutral-50 focus:bg-white focus:outline-none">
+                </div>
+
+                <!-- Panduan Kod Apps Script -->
+                <div class="bg-neutral-100 border border-black rounded-lg p-2">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-black text-[9px] uppercase">Kod Google Apps Script (Extensions &gt; Apps Script):</span>
+                        <button onclick="copyGasSnippet()" class="px-2 py-0.5 bg-black text-white rounded text-[9px] font-black">Salin Kod</button>
+                    </div>
+                    <pre id="gs-script-code" class="text-[9px] font-mono bg-white border border-black rounded p-1.5 overflow-x-auto select-all">function doGet(e) {
+  var sheet = getOrCreateSheet();
+  var id = (e && e.parameter && e.parameter.id) || 'ihtifal_2026_utama';
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i &lt; rows.length; i++) {
+    if (rows[i][0] == id) {
+      return ContentService.createTextOutput(rows[i][1]).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  return ContentService.createTextOutput('{}').setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var sheet = getOrCreateSheet();
+  var body = JSON.parse(e.postData.contents);
+  var id = body.id || 'ihtifal_2026_utama';
+  var jsonStr = JSON.stringify(body.data);
+  var now = new Date().toLocaleString('ms-MY');
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i &lt; rows.length; i++) {
+    if (rows[i][0] == id) {
+      sheet.getRange(i + 1, 2, 1, 2).setValues([[jsonStr, now]]);
+      return ContentService.createTextOutput(JSON.stringify({status: 'ok'})).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  sheet.appendRow([id, jsonStr, now]);
+  return ContentService.createTextOutput(JSON.stringify({status: 'ok'})).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getOrCreateSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('DataPelan');
+  if (!sheet) {
+    sheet = ss.insertSheet('DataPelan');
+    sheet.appendRow(['ID_Rekod', 'Data_JSON', 'Kemaskini_Terakhir']);
+  }
+  return sheet;
+}</pre>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap justify-between items-center gap-2 mt-4 pt-2 border-t border-black">
+                <button onclick="disconnectSheets()" class="px-2.5 py-1.5 bg-white hover:bg-neutral-100 text-black border border-black rounded-lg text-[10px] font-bold transition">
+                    Putuskan Sambungan
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closeSheetsModal()" class="px-3 py-1.5 bg-white hover:bg-neutral-100 text-black border border-black rounded-lg text-[10px] font-bold transition">
+                        Tutup
+                    </button>
+                    <button onclick="connectSheets()" class="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white border border-black rounded-lg text-[10px] font-black transition">
+                        Sambung &amp; Muat Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pengesahan Reset (Menggantikan confirm()) -->
+    <div id="reset-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4 no-print">
+        <div class="bg-white border-2 border-black rounded-xl max-w-sm w-full p-4 shadow-2xl">
+            <div class="flex items-center gap-2 text-black font-black text-xs mb-1.5">
+                <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+                <span>Sahkan Reset Data</span>
+            </div>
+            <p id="reset-modal-desc" class="text-[11px] font-bold text-neutral-800 mb-4 leading-relaxed">
+                Adakah anda pasti mahu mengosongkan semua nama guru bagi sesi ini?
+            </p>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeResetModal()" class="px-3 py-1.5 bg-white hover:bg-neutral-100 text-black border border-black rounded-lg text-[10px] font-bold transition">
+                    Batal
+                </button>
+                <button onclick="confirmResetData()" class="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white border border-black rounded-lg text-[10px] font-black transition">
+                    Ya, Kosongkan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifikasi Simpan -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-black border border-black text-white px-3 py-2 rounded-lg shadow-xl flex items-center gap-2 no-print text-[11px]">
+        <i class="fa-solid fa-circle-check text-white"></i>
+        <span id="toast-message" class="font-bold">Data berjaya disimpan!</span>
+    </div>
+
+    <!-- Peta Susun Atur 2D Hitam Putih -->
+    <main id="pdf-content" class="max-w-[1280px] mx-auto bg-white rounded-xl border-2 border-black p-2 md:p-3 print-container text-[10px] text-black font-bold">
+        
+        <!-- Tajuk Pelan (Dengan Lencana Sesi Aktif & Tahun Boleh Ubah) -->
+        <div class="text-center mb-2 pb-1.5 border-b-2 border-black">
+            <div class="flex items-center justify-center gap-1.5 mb-0.5">
+                <span class="inline-block px-2.5 py-0.5 bg-white text-black border border-black font-black text-[9px] rounded-full uppercase tracking-wider">Pelan Susun Atur Rujukan 2D</span>
+                <span id="session-badge" class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-black text-white border border-black font-black text-[9px] rounded-full uppercase tracking-wider">
+                    <i class="fa-solid fa-sun"></i> SESI PAGI
+                </span>
+            </div>
+            <h2 class="text-sm md:text-base font-black uppercase text-black flex items-center justify-center gap-1">
+                <span>MAJLIS IHTIFAL TADIKA AL FAQEH KIDZ</span>
+                <input type="text" id="plan-year-input" value="2026" maxlength="4" oninput="updateEventYear(this.value)" title="Klik untuk tukar tahun" class="w-14 bg-transparent hover:bg-neutral-100 focus:bg-neutral-100 border-b-2 border-dashed border-black focus:border-solid text-center font-black uppercase text-black focus:outline-none">
+            </h2>
+        </div>
+
+        <!-- GRID LAYOUT UTAMA HITAM PUTIH (SESI PAGI & PETANG) -->
+        <div id="layout-pelan" class="flex flex-col gap-2">
+
+            <!-- BARIS ATAS: Tandas Perempuan, Sambut Tetamu Luar, Pelajar Berkumpul (Persiapan) -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5">
+                <!-- Kiri Atas: Tandas Perempuan -->
+                <div class="md:col-span-3 flex flex-col gap-1.5">
+                    <div class="bg-white border-2 border-black rounded-lg p-1.5 flex flex-col justify-center text-center h-[34px]">
+                        <div class="text-[9px] font-black text-black flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-restroom text-black"></i> Tandas Perempuan
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sambut Tetamu Luar, Meja Pendaftaran & Pendaftaran -->
+                <div class="md:col-span-6 bg-white border-2 border-black rounded-lg p-1.5">
+                    <div class="flex items-center gap-2 mb-1.5 bg-neutral-100 border border-black text-black py-1 px-2 rounded-md">
+                        <div class="font-black text-[9px] uppercase tracking-wider whitespace-nowrap text-black">
+                            Sambut Tetamu Luar
+                        </div>
+                        <div class="w-full" id="station-sambutan-luar"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5 pt-1 border-t border-black">
+                        <div class="flex flex-col justify-center items-center bg-neutral-100 border border-black rounded-lg p-2 text-center">
+                            <i class="fa-solid fa-table text-black text-sm mb-0.5"></i>
+                            <div class="text-[9px] font-black text-black">Meja Pendaftaran</div>
+                        </div>
+                        <div>
+                            <div class="text-[8px] font-black text-black uppercase mb-0.5">Pendaftaran</div>
+                            <div class="space-y-1" id="station-pendaftaran"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kanan Atas: Pelajar Berkumpul & Tandas Lelaki -->
+                <div class="md:col-span-3 flex flex-col gap-1.5">
+                    <div class="bg-white border-2 border-black rounded-lg p-1.5">
+                        <div class="text-[9px] font-black text-black mb-1">Pelajar Berkumpul (Persiapan)</div>
+                        <div class="space-y-1" id="station-pelajar-berkumpul-persiapan"></div>
+                    </div>
+                    <div class="bg-white border-2 border-black rounded-lg p-1.5 flex items-center justify-between px-2 h-[34px]">
+                        <div class="text-[9px] font-black text-black flex items-center gap-1">
+                            <i class="fa-solid fa-restroom text-black"></i> Tandas Lelaki
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BARIS TENGAH 1: Laluan Ibu Bapa, Kawasan Luar Pentas (Testimoni), Laluan Pelajar -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-stretch">
+                <!-- Laluan Ibu Bapa (Kiri) -->
+                <div class="md:col-span-3 bg-white border-2 border-black rounded-lg p-1.5 flex flex-col items-center justify-center text-center">
+                    <div class="text-[9px] font-black text-black flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-person-walking text-black"></i> Laluan Ibu Bapa
+                    </div>
+                </div>
+
+                <!-- Kawasan Luar Pentas (Tengah) -->
+                <div class="md:col-span-6 bg-white border-2 border-black rounded-lg p-1.5 flex flex-col justify-center">
+                    <div class="text-[8px] font-black text-black uppercase tracking-wider text-center mb-0.5">Kawasan Luar Pentas</div>
+                    <div class="flex items-center gap-2 bg-neutral-100 border border-black rounded-md p-1">
+                        <div class="font-black text-[9px] text-black whitespace-nowrap px-1">Testimoni</div>
+                        <div class="w-full" id="station-hadapan-pentas"></div>
+                    </div>
+                </div>
+
+                <!-- Laluan Pelajar (Kanan) -->
+                <div class="md:col-span-3 bg-white border-2 border-black rounded-lg p-1.5 flex flex-col items-center justify-center text-center">
+                    <div class="text-[9px] font-black text-black flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-person-walking text-black"></i> Laluan Pelajar
+                    </div>
+                </div>
+            </div>
+
+            <!-- BARIS TENGAH 2: Hadiah, STAGE, Video & Foto, MC & PA System -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-stretch">
+                <!-- Kolum Kiri: Bahagian Hadiah -->
+                <div class="md:col-span-3 bg-white border-2 border-black rounded-lg p-1.5 flex flex-col justify-between gap-1.5">
+                    <div>
+                        <div class="text-[9px] font-black text-black mb-1 flex items-center gap-1">
+                            <i class="fa-solid fa-gift text-black"></i> Hadiah
+                        </div>
+                        <div class="space-y-1" id="station-hadiah"></div>
+                    </div>
+                </div>
+
+                <!-- Kolum Tengah: STAGE + Video & Foto di bawahnya -->
+                <div class="md:col-span-6 flex flex-col gap-1.5">
+                    <div class="bg-neutral-100 border-2 border-black text-black rounded-lg p-3 flex flex-col items-center justify-center text-center min-h-[115px] flex-1">
+                        <div class="text-lg md:text-xl font-black tracking-[0.25em] uppercase text-black">STAGE</div>
+                        <div class="text-[8px] font-black text-black mt-0.5 uppercase tracking-wider">Pentas Utama</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <div class="bg-white border-2 border-black rounded-lg p-1.5">
+                            <div class="text-[9px] font-black text-black mb-1 flex items-center gap-1">
+                                <i class="fa-solid fa-video text-black"></i> Video
+                            </div>
+                            <div class="space-y-1" id="station-video"></div>
+                        </div>
+                        <div class="bg-white border-2 border-black rounded-lg p-1.5">
+                            <div class="text-[9px] font-black text-black mb-1 flex items-center gap-1">
+                                <i class="fa-solid fa-camera text-black"></i> Foto / Fotografi
+                            </div>
+                            <div class="space-y-1" id="station-foto-bawah"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kolum Kanan: MC & PA System -->
+                <div class="md:col-span-3 bg-white border-2 border-black rounded-lg p-1.5 flex flex-col justify-between gap-1.5">
+                    <div>
+                        <div class="text-[9px] font-black text-black mb-1 flex items-center gap-1">
+                            <i class="fa-solid fa-microphone-lines text-black"></i> MC / Pengacara
+                        </div>
+                        <div class="space-y-1" id="station-mc"></div>
+                    </div>
+                    <div class="pt-1.5 border-t border-black">
+                        <div class="text-[9px] font-black text-black mb-1 flex items-center gap-1">
+                            <i class="fa-solid fa-sliders text-black"></i> PA System
+                        </div>
+                        <div class="space-y-1" id="station-pa-system"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BARIS KERUSI 1 (ATAS LALUAN): Diapit Tangga Kiri & Koordinat + Tangga Kanan -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-stretch">
+                <!-- Kiri: Tangga Kiri Bawah & Tangga Kiri Atas dengan Ikon Tangga di Tengah -->
+                <div class="md:col-span-3 bg-white border-2 border-black rounded-lg p-1.5 flex flex-col justify-between gap-1">
+                    <div class="flex items-center gap-1.5 py-1 px-1.5 bg-neutral-50 border border-black rounded-md">
+                        <div class="text-[9px] font-black text-black flex items-center gap-1 whitespace-nowrap">
+                            <i class="fa-solid fa-arrow-down-short-wide text-black"></i> Tangga Kiri Bawah
+                        </div>
+                        <div class="w-full" id="station-tangga-kiri-bawah"></div>
+                    </div>
+                    <div class="flex items-center justify-center gap-1.5 py-0.5 text-black">
+                        <div class="h-px bg-black flex-1"></div>
+                        <i class="fa-solid fa-stairs text-xs"></i>
+                        <div class="h-px bg-black flex-1"></div>
+                    </div>
+                    <div class="flex items-center gap-1.5 py-1 px-1.5 bg-neutral-50 border border-black rounded-md">
+                        <div class="text-[9px] font-black text-black flex items-center gap-1 whitespace-nowrap">
+                            <i class="fa-solid fa-arrow-up-wide-short text-black"></i> Tangga Kiri Atas
+                        </div>
+                        <div class="w-full" id="station-tangga-kiri-atas"></div>
+                    </div>
+                </div>
+
+                <!-- Tengah: Kerusi Ibu Bapa (Blok A - D) -->
+                <div class="md:col-span-6 bg-white border-2 border-black rounded-lg p-1.5 flex flex-col justify-between">
+                    <div class="text-[9px] font-black text-black mb-1 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-chair text-black"></i> Kerusi Ibu Bapa
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 my-auto">
+                        <div class="bg-neutral-100 border border-black rounded p-1.5 text-center text-[8px] text-black font-black">Blok Kerusi A</div>
+                        <div class="bg-neutral-100 border border-black rounded p-1.5 text-center text-[8px] text-black font-black">Blok Kerusi B</div>
+                        <div class="bg-neutral-100 border border-black rounded p-1.5 text-center text-[8px] text-black font-black">Blok Kerusi C</div>
+                        <div class="bg-neutral-100 border border-black rounded p-1.5 text-center text-[8px] text-black font-black">Blok Kerusi D</div>
+                    </div>
+                </div>
+
+                <!-- Kanan: Koordinat & Tangga Kanan Atas dengan Ikon Tangga di Tengah -->
+                <div class="md:col-span-3 bg-white border-2 border-black rounded-lg p-1.5 flex flex-col justify-between gap-1">
+                    <div class="flex items-center gap-1.5 py-1 px-1.5 bg-neutral-50 border border-black rounded-md">
+                        <div class="text-[9px] font-black text-black flex items-center gap-1 whitespace-nowrap">
+                            <i class="fa-solid fa-walkie-talkie text-black"></i> Koordinat
+                        </div>
+                        <div class="w-full" id="station-koordinator"></div>
+                    </div>
+                    <div class="flex items-center justify-center gap-1.5 py-0.5 text-black">
+                        <div class="h-px bg-black flex-1"></div>
+                        <i class="fa-solid fa-stairs text-xs"></i>
+                        <div class="h-px bg-black flex-1"></div>
+                    </div>
+                    <div class="flex items-center gap-1.5 py-1 px-1.5 bg-neutral-50 border border-black rounded-md">
+                        <div class="text-[9px] font-black text-black flex items-center gap-1 whitespace-nowrap">
+                            <i class="fa-solid fa-arrow-up-wide-short text-black"></i> Tangga Kanan Atas
+                        </div>
+                        <div class="w-full" id="station-tangga-kanan-atas"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KOTAK KECIL MEMANJANG: Laluan -->
+            <div class="bg-neutral-100 border-2 border-black rounded-md py-1 px-2 text-center">
+                <span class="text-[9px] font-black text-black uppercase tracking-widest flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-arrows-left-right text-black"></i> Laluan
+                </span>
+            </div>
+
+            <!-- BARIS TUGAS (TEPAT DI ATAS KERUSI PELAJAR): Sambut Tetamu Dalam, Pembantu Guru, Pakai & Buka Jubah -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5">
+                <div class="md:col-span-4 bg-white border-2 border-black rounded-lg p-1.5 flex items-center gap-1.5">
+                    <div class="text-[9px] font-black text-black flex items-center gap-1 shrink-0">
+                        <i class="fa-solid fa-handshake text-black"></i> Sambut Tetamu Dalam
+                    </div>
+                    <div class="flex-1 min-w-0" id="station-tetamu-dalam"></div>
+                </div>
+                <div class="md:col-span-4 bg-white border-2 border-black rounded-lg p-1.5 flex items-center gap-1.5">
+                    <div class="text-[9px] font-black text-black flex items-center gap-1 shrink-0 leading-tight">
+                        <i class="fa-solid fa-hands-helping text-black"></i>
+                        <span>Pembantu Guru<br><span class="text-[7px] font-bold text-black">(Bawa Pelajar ke Tandas)</span></span>
+                    </div>
+                    <div class="flex-1 min-w-0" id="station-pengurusan-barisan"></div>
+                </div>
+                <div class="md:col-span-4 bg-white border-2 border-black rounded-lg p-1.5 flex items-center gap-1.5">
+                    <div class="text-[9px] font-black text-black flex items-center gap-1 shrink-0">
+                        <i class="fa-solid fa-graduation-cap text-black"></i> Pakai &amp; Buka Jubah
+                    </div>
+                    <div class="flex-1 min-w-0" id="station-jubah"></div>
+                </div>
+            </div>
+
+            <!-- BARIS KERUSI 2 (BAWAH LALUAN): Kerusi Ibu Bapa (Blok A - C) & Kerusi Pelajar (Blok D) -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5">
+                <div class="md:col-span-6 bg-white border-2 border-black rounded-lg p-1.5 flex flex-col justify-between">
+                    <div class="text-[9px] font-black text-black mb-1 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-chair text-black"></i> Kerusi Ibu Bapa
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <div class="bg-neutral-100 border border-black rounded p-1 text-center text-[8px] text-black font-black">Blok Kerusi A</div>
+                        <div class="bg-neutral-100 border border-black rounded p-1 text-center text-[8px] text-black font-black">Blok Kerusi B</div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-6 grid grid-cols-2 gap-1.5">
+                    <div class="bg-white border-2 border-black rounded-lg p-1.5 flex flex-col justify-between">
+                        <div class="text-[9px] font-black text-black mb-1 flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-chair text-black"></i> Kerusi Ibu Bapa
+                        </div>
+                        <div class="bg-neutral-100 border border-black rounded p-1 text-center text-[8px] text-black font-black">Blok Kerusi C</div>
+                    </div>
+                    <div class="bg-neutral-100 border-2 border-black rounded-lg p-1.5 flex flex-col justify-between">
+                        <div class="text-[9px] font-black text-black mb-1 flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-chair text-black"></i> Kerusi Pelajar
+                        </div>
+                        <div class="bg-white border border-black rounded p-1 text-center text-[8px] text-black font-black">Blok Kerusi D</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BARIS PALING BAWAH: Cawangan Mengikut Sesi -->
+            <div class="bg-white border-2 border-black rounded-lg p-2">
+                <div id="branches-grid" class="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                    <div class="bg-neutral-50 border border-black rounded-lg p-1.5">
+                        <div id="branch-title-1" class="font-black text-[9px] text-black uppercase mb-1">Cawangan DK</div>
+                        <div class="space-y-1" id="station-kumpulan-kelas-1"></div>
+                    </div>
+                    <div class="bg-neutral-50 border border-black rounded-lg p-1.5">
+                        <div id="branch-title-2" class="font-black text-[9px] text-black uppercase mb-1">Cawangan U19</div>
+                        <div class="space-y-1" id="station-kumpulan-kelas-2"></div>
+                    </div>
+                    <div id="branch-card-3" class="hidden bg-neutral-50 border border-black rounded-lg p-1.5">
+                        <div id="branch-title-3" class="font-black text-[9px] text-black uppercase mb-1">Cawangan BRP</div>
+                        <div class="space-y-1" id="station-kumpulan-kelas-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BAHAGIAN NOTA / CATATAN -->
+            <div class="bg-white border-2 border-black rounded-lg p-2">
+                <div class="text-[9px] font-black text-black uppercase mb-1 flex items-center gap-1.5">
+                    <i class="fa-solid fa-note-sticky text-black"></i> Nota / Catatan Tambahan
+                </div>
+                <textarea id="session-notes" rows="2" placeholder="Tulis nota, peringatan, atau arahan khas di sini..." oninput="updateNotesData(this.value)" class="w-full text-[10px] bg-neutral-50 border border-black rounded-md p-1.5 text-black placeholder-neutral-500 font-bold focus:outline-none focus:bg-white resize-y"></textarea>
+            </div>
+
+        </div>
+
+        <!-- LAYOUT KHUSUS: TAMBAHAN KERJA -->
+        <div id="layout-tambahan" class="hidden flex-col gap-2">
+            <div class="flex items-center justify-between bg-neutral-100 border-2 border-black rounded-lg px-2.5 py-1.5">
+                <div class="text-[10px] font-black uppercase tracking-wider text-black flex items-center gap-1.5">
+                    <i class="fa-solid fa-list-check"></i> Senarai Tambahan Kerja &amp; Tugas Khas Guru
+                </div>
+                <button onclick="addExtraTaskRow()" class="px-2.5 py-1 bg-black hover:bg-neutral-800 text-white border border-black font-black text-[9px] rounded-md transition flex items-center gap-1 no-print">
+                    <i class="fa-solid fa-plus"></i> Tambah Baris Kerja
+                </button>
+            </div>
+
+            <!-- Jadual Tambahan Kerja -->
+            <div class="border-2 border-black rounded-lg overflow-hidden">
+                <div class="grid grid-cols-12 bg-black text-white text-[9px] font-black uppercase tracking-wider py-1.5 px-2">
+                    <div class="col-span-1 text-center">Bil</div>
+                    <div class="col-span-4">Bahagian / Jenis Kerja</div>
+                    <div class="col-span-4">Nama Guru Bertugas</div>
+                    <div class="col-span-3">Catatan / Skop Tugas</div>
+                </div>
+                <div id="extra-tasks-list" class="divide-y divide-black bg-white"></div>
+            </div>
+
+            <!-- Nota Tambahan Kerja -->
+            <div class="bg-white border-2 border-black rounded-lg p-2">
+                <div class="text-[9px] font-black text-black uppercase mb-1 flex items-center gap-1.5">
+                    <i class="fa-solid fa-note-sticky text-black"></i> Nota / Arahan Tambahan Kerja
+                </div>
+                <textarea id="tambahan-notes" rows="3" placeholder="Tulis arahan kerja sebelum/selepas majlis (contoh: kemas dewan, susun kerusi, angkat hadiah)..." oninput="updateTambahanNotes(this.value)" class="w-full text-[10px] bg-neutral-50 border border-black rounded-md p-1.5 text-black placeholder-neutral-500 font-bold focus:outline-none focus:bg-white resize-y"></textarea>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Nota -->
+    <footer class="max-w-[1280px] mx-auto mt-2 text-center text-[9px] font-bold text-black no-print">
+        Majlis Ihtifal Tadika Al Faqeh Kidz <span id="footer-year-text">2026</span> &bull; Pelan Susun Atur Rujukan 2D (Sesi Pagi &amp; Petang)
+    </footer>
+
+    <!-- Skrip Aplikasi -->
+    <script>
+        const stationsConfig = {
+            'station-sambutan-luar': { count: 1, prefix: '01' },
+            'station-pendaftaran': { count: 3, prefix: 'G' },
+            'station-pelajar-berkumpul-persiapan': { count: 3, prefix: 'G' },
+            'station-hadapan-pentas': { count: 1, prefix: 'S1' },
+            'station-hadiah': { count: 2, prefix: '0' },
+            'station-tangga-kiri-bawah': { count: 1, prefix: '01' },
+            'station-tangga-kiri-atas': { count: 1, prefix: '01' },
+            'station-koordinator': { count: 1, prefix: '01' },
+            'station-tangga-kanan-atas': { count: 1, prefix: '01' },
+            'station-mc': { count: 1, prefix: 'G1' },
+            'station-pa-system': { count: 1, prefix: 'G1' },
+            'station-video': { count: 1, prefix: '01' },
+            'station-foto-bawah': { count: 1, prefix: '01' },
+            'station-tetamu-dalam': { count: 1, prefix: '01' },
+            'station-pengurusan-barisan': { count: 1, prefix: 'G1' },
+            'station-jubah': { count: 1, prefix: '01' },
+            'station-kumpulan-kelas-1': { count: 3, prefix: 'G' },
+            'station-kumpulan-kelas-2': { count: 3, prefix: 'G' },
+            'station-kumpulan-kelas-3': { count: 3, prefix: 'G' }
+        };
+
+        const STORAGE_KEY = 'ihtifal_2026_dua_sesi_data';
+        const GS_CONFIG_KEY = 'ihtifal_2026_gsheets_cfg';
+        const DEFAULT_GS_URL = 'https://script.google.com/macros/s/AKfycbwmBhbhL4PvNRg8hw4cNE05lFSC_g2xQDrR1u9CLRexFMYYDJun08sUTouqHXGcCmELLw/exec';
+        let gsConfig = JSON.parse(localStorage.getItem(GS_CONFIG_KEY)) || {
+            url: DEFAULT_GS_URL,
+            recordId: 'ihtifal_2026_utama',
+            connected: true
+        };
+
+        let currentSession = 'pagi'; // 'pagi', 'petang', atau 'tambahan'
+        let allSessionsData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+            eventYear: '2026',
+            pagi: {},
+            petang: {},
+            tambahan: {
+                tasks: [
+                    { task: 'Persiapan Dewan & Pentas (Sebelum Majlis)', teacher: '', note: '' },
+                    { task: 'Susunan & Semakan Hadiah / Sijil', teacher: '', note: '' },
+                    { task: 'Pengurusan Jubah & Pakaian Pelajar', teacher: '', note: '' },
+                    { task: 'Kebersihan & Kemas Dewan (Selepas Majlis)', teacher: '', note: '' },
+                    { task: 'Logistik & Peralatan Teknikal', teacher: '', note: '' },
+                    { task: '', teacher: '', note: '' }
+                ],
+                notes: ''
+            }
+        };
+
+        if (!allSessionsData.eventYear) {
+            allSessionsData.eventYear = '2026';
+        }
+        if (!allSessionsData.tambahan || !Array.isArray(allSessionsData.tambahan.tasks)) {
+            allSessionsData.tambahan = {
+                tasks: [
+                    { task: 'Persiapan Dewan & Pentas (Sebelum Majlis)', teacher: '', note: '' },
+                    { task: 'Susunan & Semakan Hadiah / Sijil', teacher: '', note: '' },
+                    { task: 'Pengurusan Jubah & Pakaian Pelajar', teacher: '', note: '' },
+                    { task: 'Kebersihan & Kemas Dewan (Selepas Majlis)', teacher: '', note: '' },
+                    { task: 'Logistik & Peralatan Teknikal', teacher: '', note: '' },
+                    { task: '', teacher: '', note: '' }
+                ],
+                notes: ''
+            };
+        }
+
+        function updateEventYear(val) {
+            const cleanYear = val.trim() || '2026';
+            allSessionsData.eventYear = val;
+            const headerInput = document.getElementById('header-year-input');
+            const planInput = document.getElementById('plan-year-input');
+            const footerText = document.getElementById('footer-year-text');
+            if (headerInput && headerInput.value !== val) headerInput.value = val;
+            if (planInput && planInput.value !== val) planInput.value = val;
+            if (footerText) footerText.textContent = cleanYear;
+        }
+
+        function applySavedYear() {
+            const yr = allSessionsData.eventYear || '2026';
+            const headerInput = document.getElementById('header-year-input');
+            const planInput = document.getElementById('plan-year-input');
+            const footerText = document.getElementById('footer-year-text');
+            if (headerInput) headerInput.value = yr;
+            if (planInput) planInput.value = yr;
+            if (footerText) footerText.textContent = yr;
+        }
+
+        function switchSession(session) {
+            currentSession = session;
+
+            const tabPagi = document.getElementById('tab-pagi');
+            const tabPetang = document.getElementById('tab-petang');
+            const tabTambahan = document.getElementById('tab-tambahan');
+            const badge = document.getElementById('session-badge');
+            const copyBtn = document.getElementById('btn-copy-session');
+            const copyBtnText = document.getElementById('copy-btn-text');
+
+            const layoutPelan = document.getElementById('layout-pelan');
+            const layoutTambahan = document.getElementById('layout-tambahan');
+
+            // Elemen cawangan dinamik mengikut sesi
+            const branchesGrid = document.getElementById('branches-grid');
+            const branchTitle1 = document.getElementById('branch-title-1');
+            const branchTitle2 = document.getElementById('branch-title-2');
+            const branchCard3 = document.getElementById('branch-card-3');
+
+            const inactiveTabClass = 'px-3.5 py-1.5 rounded-lg font-bold text-[11px] transition-all flex items-center gap-1.5 text-black hover:bg-neutral-200';
+            const activeTabClass = 'px-3.5 py-1.5 rounded-lg font-black text-[11px] transition-all flex items-center gap-1.5 bg-black text-white';
+
+            tabPagi.className = inactiveTabClass;
+            tabPetang.className = inactiveTabClass;
+            tabTambahan.className = inactiveTabClass;
+
+            if (session === 'pagi') {
+                tabPagi.className = activeTabClass;
+                layoutPelan.classList.remove('hidden');
+                layoutPelan.classList.add('flex');
+                layoutTambahan.classList.add('hidden');
+                layoutTambahan.classList.remove('flex');
+                copyBtn.classList.remove('hidden');
+
+                badge.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 bg-black text-white border border-black font-black text-[9px] rounded-full uppercase tracking-wider';
+                badge.innerHTML = '<i class="fa-solid fa-sun"></i> SESI PAGI';
+                
+                copyBtnText.textContent = 'Salin ke Petang';
+
+                // Sesi Pagi: 2 Cawangan (Cawangan DK & Cawangan U19)
+                branchesGrid.className = 'grid grid-cols-1 md:grid-cols-2 gap-1.5';
+                branchTitle1.textContent = 'Cawangan DK';
+                branchTitle2.textContent = 'Cawangan U19';
+                branchCard3.classList.add('hidden');
+                renderStations();
+            } else if (session === 'petang') {
+                tabPetang.className = activeTabClass;
+                layoutPelan.classList.remove('hidden');
+                layoutPelan.classList.add('flex');
+                layoutTambahan.classList.add('hidden');
+                layoutTambahan.classList.remove('flex');
+                copyBtn.classList.remove('hidden');
+
+                badge.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 bg-white text-black border-2 border-black font-black text-[9px] rounded-full uppercase tracking-wider';
+                badge.innerHTML = '<i class="fa-solid fa-cloud-sun"></i> SESI PETANG';
+                
+                copyBtnText.textContent = 'Salin ke Pagi';
+
+                // Sesi Petang: 3 Cawangan (Cawangan VP, Cawangan KM & Cawangan BRP)
+                branchesGrid.className = 'grid grid-cols-1 md:grid-cols-3 gap-1.5';
+                branchTitle1.textContent = 'Cawangan VP';
+                branchTitle2.textContent = 'Cawangan KM';
+                branchCard3.classList.remove('hidden');
+                renderStations();
+            } else {
+                tabTambahan.className = activeTabClass;
+                layoutPelan.classList.add('hidden');
+                layoutPelan.classList.remove('flex');
+                layoutTambahan.classList.remove('hidden');
+                layoutTambahan.classList.add('flex');
+                copyBtn.classList.add('hidden');
+
+                badge.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 bg-black text-white border border-black font-black text-[9px] rounded-full uppercase tracking-wider';
+                badge.innerHTML = '<i class="fa-solid fa-clipboard-list"></i> TAMBAHAN KERJA';
+                renderTambahanKerja();
+            }
+        }
+
+        function renderTambahanKerja() {
+            const listEl = document.getElementById('extra-tasks-list');
+            const notesEl = document.getElementById('tambahan-notes');
+            if (!listEl) return;
+
+            listEl.innerHTML = '';
+            const tasks = allSessionsData.tambahan.tasks || [];
+
+            tasks.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.className = 'grid grid-cols-12 items-center gap-1.5 p-1.5 bg-white hover:bg-neutral-50';
+
+                // Bilangan
+                const numCol = document.createElement('div');
+                numCol.className = 'col-span-1 text-center font-black text-[10px] text-black';
+                numCol.textContent = `${index + 1}.`;
+
+                // Bahagian / Jenis Kerja
+                const taskCol = document.createElement('div');
+                taskCol.className = 'col-span-4';
+                const taskInput = document.createElement('input');
+                taskInput.type = 'text';
+                taskInput.value = item.task || '';
+                taskInput.placeholder = '[ Bahagian / Tugas Khas ]';
+                taskInput.className = 'w-full text-[10px] bg-neutral-50 border border-black rounded px-1.5 py-1 text-black placeholder-neutral-500 font-bold focus:outline-none focus:bg-white';
+                taskInput.addEventListener('input', function() {
+                    allSessionsData.tambahan.tasks[index].task = this.value;
+                });
+                taskCol.appendChild(taskInput);
+
+                // Nama Guru Bertugas
+                const teacherCol = document.createElement('div');
+                teacherCol.className = 'col-span-4';
+                const teacherInput = document.createElement('input');
+                teacherInput.type = 'text';
+                teacherInput.value = item.teacher || '';
+                teacherInput.placeholder = '[ Nama Guru ]';
+                teacherInput.className = 'w-full text-[10px] bg-white border border-black rounded px-1.5 py-1 text-black placeholder-neutral-500 font-bold focus:outline-none';
+                teacherInput.addEventListener('input', function() {
+                    allSessionsData.tambahan.tasks[index].teacher = this.value;
+                });
+                teacherCol.appendChild(teacherInput);
+
+                // Catatan + Butang Padam
+                const noteCol = document.createElement('div');
+                noteCol.className = 'col-span-3 flex items-center gap-1';
+                const noteInput = document.createElement('input');
+                noteInput.type = 'text';
+                noteInput.value = item.note || '';
+                noteInput.placeholder = '[ Catatan ]';
+                noteInput.className = 'w-full text-[10px] bg-neutral-50 border border-black rounded px-1.5 py-1 text-black placeholder-neutral-500 font-bold focus:outline-none focus:bg-white';
+                noteInput.addEventListener('input', function() {
+                    allSessionsData.tambahan.tasks[index].note = this.value;
+                });
+                noteCol.appendChild(noteInput);
+
+                if (tasks.length > 1) {
+                    const delBtn = document.createElement('button');
+                    delBtn.type = 'button';
+                    delBtn.title = 'Padam baris ini';
+                    delBtn.className = 'px-1.5 py-1 bg-white hover:bg-neutral-200 text-black border border-black rounded text-[9px] font-black no-print';
+                    delBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                    delBtn.onclick = function() {
+                        allSessionsData.tambahan.tasks.splice(index, 1);
+                        renderTambahanKerja();
+                    };
+                    noteCol.appendChild(delBtn);
+                }
+
+                row.appendChild(numCol);
+                row.appendChild(taskCol);
+                row.appendChild(teacherCol);
+                row.appendChild(noteCol);
+                listEl.appendChild(row);
+            });
+
+            if (notesEl) {
+                notesEl.value = allSessionsData.tambahan.notes || '';
+            }
+        }
+
+        function addExtraTaskRow() {
+            allSessionsData.tambahan.tasks.push({ task: '', teacher: '', note: '' });
+            renderTambahanKerja();
+        }
+
+        function updateTambahanNotes(value) {
+            allSessionsData.tambahan.notes = value;
+        }
+
+        function renderStations() {
+            const sessionData = allSessionsData[currentSession] || {};
+
+            for (const [stationId, config] of Object.entries(stationsConfig)) {
+                const container = document.getElementById(stationId);
+                if (!container) continue;
+                container.innerHTML = '';
+
+                for (let i = 1; i <= config.count; i++) {
+                    const key = `${stationId}_${i}`;
+                    const val = sessionData[key] || '';
+
+                    const div = document.createElement('div');
+                    div.className = "flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-md border border-black";
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = val;
+                    input.placeholder = '[ Nama Guru ]';
+                    input.className = 'w-full text-[10px] bg-transparent border-none focus:outline-none focus:ring-0 text-black placeholder-neutral-500 font-bold px-0.5';
+                    input.addEventListener('input', function() {
+                        updateTeacherData(key, this.value);
+                    });
+
+                    div.appendChild(input);
+                    container.appendChild(div);
+                }
+            }
+
+            // Kemas kini ruangan nota mengikut sesi aktif
+            const notesEl = document.getElementById('session-notes');
+            if (notesEl) {
+                notesEl.value = sessionData['session_notes'] || '';
+            }
+        }
+
+        function updateTeacherData(key, value) {
+            if (!allSessionsData[currentSession]) {
+                allSessionsData[currentSession] = {};
+            }
+            allSessionsData[currentSession][key] = value;
+        }
+
+        function updateNotesData(value) {
+            if (!allSessionsData[currentSession]) {
+                allSessionsData[currentSession] = {};
+            }
+            allSessionsData[currentSession]['session_notes'] = value;
+        }
+
+        function copyToOtherSession() {
+            const targetSession = currentSession === 'pagi' ? 'petang' : 'pagi';
+            const targetLabel = targetSession === 'pagi' ? 'Sesi Pagi' : 'Sesi Petang';
+            
+            allSessionsData[targetSession] = { ...allSessionsData[currentSession] };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessionsData));
+            syncToSheets();
+            showToast(`Senarai nama guru disalin ke ${targetLabel}!`);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            msgEl.textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        async function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessionsData));
+            const label = currentSession === 'pagi' ? 'Sesi Pagi' : (currentSession === 'petang' ? 'Sesi Petang' : 'Tambahan Kerja');
+            
+            if (gsConfig.connected && gsConfig.url) {
+                showToast(`Menyimpan ${label} ke Google Sheets...`);
+                const ok = await syncToSheets();
+                if (ok) {
+                    showToast(`Data ${label} disimpan ke Google Sheets!`);
+                    return;
+                }
+            }
+            showToast(`Data ${label} berjaya disimpan!`);
+        }
+
+        // --- FUNGSI INTEGRASI GOOGLE SHEETS ---
+        function openSheetsModal() {
+            document.getElementById('gs-url-input').value = gsConfig.url || '';
+            document.getElementById('gs-record-id').value = gsConfig.recordId || 'ihtifal_2026_utama';
+            const modal = document.getElementById('sheets-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeSheetsModal() {
+            const modal = document.getElementById('sheets-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function copyGasSnippet() {
+            const codeText = document.getElementById('gs-script-code').textContent;
+            const tempArea = document.createElement('textarea');
+            tempArea.value = codeText;
+            document.body.appendChild(tempArea);
+            tempArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempArea);
+            showToast('Kod Google Apps Script berjaya disalin!');
+        }
+
+        function updateSheetsStatusUI(connected) {
+            const btn = document.getElementById('btn-sheets-status');
+            const text = document.getElementById('sheets-status-text');
+            if (connected) {
+                btn.className = 'px-2 py-1 bg-black text-white border border-black font-black text-[10px] rounded-lg transition flex items-center gap-1';
+                text.textContent = 'Google Sheets: Aktif';
+            } else {
+                btn.className = 'px-2 py-1 bg-white hover:bg-neutral-100 text-black border border-black font-bold text-[10px] rounded-lg transition flex items-center gap-1';
+                text.textContent = 'Google Sheets: Offline';
+            }
+        }
+
+        async function connectSheets(silent = false) {
+            const url = document.getElementById('gs-url-input').value.trim();
+            const recordId = document.getElementById('gs-record-id').value.trim() || 'ihtifal_2026_utama';
+
+            if (!url || !url.startsWith('https://script.google.com/')) {
+                if (!silent) showToast('Sila masukkan URL Web App Google Apps Script yang sah.');
+                return;
+            }
+
+            try {
+                if (!silent) showToast('Menyambung ke Google Sheets...');
+                const fetchUrl = `${url}${url.includes('?') ? '&' : '?'}id=${encodeURIComponent(recordId)}`;
+                const response = await fetch(fetchUrl);
+                const cloudData = await response.json();
+
+                gsConfig = { url, recordId, connected: true };
+                localStorage.setItem(GS_CONFIG_KEY, JSON.stringify(gsConfig));
+
+                if (cloudData && (cloudData.pagi || cloudData.petang || cloudData.tambahan)) {
+                    allSessionsData = cloudData;
+                    if (!allSessionsData.eventYear) allSessionsData.eventYear = '2026';
+                    applySavedYear();
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessionsData));
+                    switchSession(currentSession);
+                } else {
+                    await syncToSheets();
+                }
+
+                updateSheetsStatusUI(true);
+                closeSheetsModal();
+                if (!silent) showToast('Berjaya disambung ke Google Sheets!');
+            } catch (err) {
+                console.error('Ralat Google Sheets:', err);
+                gsConfig.connected = false;
+                updateSheetsStatusUI(false);
+                if (!silent) showToast('Gagal sambung. Pastikan akses Web App ditetapkan kepada "Anyone".');
+            }
+        }
+
+        async function syncToSheets() {
+            if (!gsConfig.connected || !gsConfig.url) return false;
+            try {
+                await fetch(gsConfig.url, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        id: gsConfig.recordId || 'ihtifal_2026_utama',
+                        data: allSessionsData
+                    })
+                });
+                return true;
+            } catch (err) {
+                console.error('Ralat simpan ke Google Sheets:', err);
+                return false;
+            }
+        }
+
+        async function refreshFromSheets() {
+            const url = (gsConfig.url || DEFAULT_GS_URL || '').trim();
+            const recordId = (gsConfig.recordId || 'ihtifal_2026_utama').trim();
+
+            if (!url) {
+                showToast('Tiada URL Google Sheets ditetapkan.');
+                return;
+            }
+
+            const icon = document.getElementById('refresh-icon');
+            if (icon) icon.classList.add('fa-spin');
+            showToast('Memuat semula data terkini dari Google Sheets...');
+
+            try {
+                const fetchUrl = `${url}${url.includes('?') ? '&' : '?'}id=${encodeURIComponent(recordId)}&_t=${Date.now()}`;
+                const response = await fetch(fetchUrl);
+                const cloudData = await response.json();
+
+                gsConfig = { url, recordId, connected: true };
+                localStorage.setItem(GS_CONFIG_KEY, JSON.stringify(gsConfig));
+                updateSheetsStatusUI(true);
+
+                if (cloudData && (cloudData.pagi || cloudData.petang || cloudData.tambahan)) {
+                    allSessionsData = cloudData;
+                    if (!allSessionsData.eventYear) allSessionsData.eventYear = '2026';
+                    applySavedYear();
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessionsData));
+                    switchSession(currentSession);
+                    showToast('Data terkini berjaya dimuat semula!');
+                } else {
+                    switchSession(currentSession);
+                    showToast('Tiada rekod baharu ditemui di Google Sheets.');
+                }
+            } catch (err) {
+                console.error('Ralat refresh Google Sheets:', err);
+                showToast('Gagal memuat semula data. Sila semak sambungan internet.');
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
+            }
+        }
+
+        function disconnectSheets() {
+            gsConfig = { url: '', recordId: 'ihtifal_2026_utama', connected: false };
+            localStorage.setItem(GS_CONFIG_KEY, JSON.stringify(gsConfig));
+            updateSheetsStatusUI(false);
+            closeSheetsModal();
+            showToast('Sambungan Google Sheets diputuskan.');
+        }
+
+        function openResetModal() {
+            const label = currentSession === 'pagi' ? 'Sesi Pagi' : (currentSession === 'petang' ? 'Sesi Petang' : 'Tambahan Kerja');
+            document.getElementById('reset-modal-desc').textContent = `Adakah anda pasti mahu mengosongkan semua data bagi ${label} sahaja?`;
+            const modal = document.getElementById('reset-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeResetModal() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmResetData() {
+            if (currentSession === 'tambahan') {
+                allSessionsData.tambahan = {
+                    tasks: [
+                        { task: 'Persiapan Dewan & Pentas (Sebelum Majlis)', teacher: '', note: '' },
+                        { task: 'Susunan & Semakan Hadiah / Sijil', teacher: '', note: '' },
+                        { task: 'Pengurusan Jubah & Pakaian Pelajar', teacher: '', note: '' },
+                        { task: 'Kebersihan & Kemas Dewan (Selepas Majlis)', teacher: '', note: '' },
+                        { task: 'Logistik & Peralatan Teknikal', teacher: '', note: '' },
+                        { task: '', teacher: '', note: '' }
+                    ],
+                    notes: ''
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessionsData));
+                renderTambahanKerja();
+            } else {
+                allSessionsData[currentSession] = {};
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(allSessionsData));
+                renderStations();
+            }
+            syncToSheets();
+            closeResetModal();
+            const label = currentSession === 'pagi' ? 'Sesi Pagi' : (currentSession === 'petang' ? 'Sesi Petang' : 'Tambahan Kerja');
+            showToast(`Semua data ${label} telah dikosongkan.`);
+        }
+
+        function exportPDF() {
+            const label = currentSession === 'pagi' ? 'Sesi_Pagi' : (currentSession === 'petang' ? 'Sesi_Petang' : 'Tambahan_Kerja');
+            const yr = (allSessionsData.eventYear || '2026').trim() || '2026';
+            showToast(`Menjana fail PDF (${label.replace('_', ' ')})...`);
+            
+            const element = document.getElementById('pdf-content');
+            const opt = {
+                margin:       [2, 2, 2, 2],
+                filename:     `Pelan_Susun_Atur_Ihtifal_${yr}_${label}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false, windowWidth: 1280 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape', compress: true }
+            };
+
+            html2pdf().from(element).set(opt).save().then(() => {
+                showToast('PDF berjaya dimuat turun!');
+            });
+        }
+
+        window.onload = function() {
+            applySavedYear();
+            switchSession('pagi');
+            if (gsConfig.url) {
+                document.getElementById('gs-url-input').value = gsConfig.url;
+                document.getElementById('gs-record-id').value = gsConfig.recordId || 'ihtifal_2026_utama';
+                connectSheets(true);
+            }
+        };
+    </script>
+</body>
+</html>
