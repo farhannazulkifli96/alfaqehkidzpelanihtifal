@@ -20,21 +20,59 @@
             font-weight: 700;
         }
         @media print {
+            @page {
+                size: A4 landscape;
+                margin: 4mm;
+            }
             .no-print {
                 display: none !important;
             }
             body {
                 background-color: #ffffff !important;
                 color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
             .print-container {
                 box-shadow: none !important;
                 border: 2px solid #000000 !important;
-                padding: 4px !important;
+                padding: 6px !important;
                 margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                zoom: 0.78;
             }
+        }
+        /* Kelas bantuan semasa eksport PDF supaya muat 1 muka surat A4 */
+        .pdf-fit-mode {
+            width: 1260px !important;
+            max-width: 1260px !important;
+            padding: 8px !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border-radius: 6px !important;
+        }
+        .pdf-fit-mode .flex.flex-col.gap-2 {
+            gap: 4px !important;
+        }
+        .pdf-fit-mode .gap-1\.5 {
+            gap: 4px !important;
+        }
+        .pdf-fit-mode .p-2 {
+            padding: 5px !important;
+        }
+        .pdf-fit-mode .p-1\.5 {
+            padding: 4px !important;
+        }
+        .pdf-fit-mode .min-h-\[115px\] {
+            min-height: 76px !important;
+        }
+        .pdf-fit-mode textarea {
+            rows: 1;
+            min-height: 34px !important;
+            max-height: 42px !important;
         }
         ::-webkit-scrollbar {
             width: 6px;
@@ -1066,19 +1104,55 @@ function getOrCreateSheet() {
         function exportPDF() {
             const label = currentSession === 'pagi' ? 'Sesi_Pagi' : (currentSession === 'petang' ? 'Sesi_Petang' : 'Tambahan_Kerja');
             const yr = (allSessionsData.eventYear || '2026').trim() || '2026';
-            showToast(`Menjana fail PDF (${label.replace('_', ' ')})...`);
+            showToast(`Menjana fail PDF 1 muka surat A4 (${label.replace('_', ' ')})...`);
             
             const element = document.getElementById('pdf-content');
+            element.classList.add('pdf-fit-mode');
+
+            // Guna html2canvas + jsPDF secara langsung untuk mengira skala tepat muat 1 kertas A4 Landscape
             const opt = {
-                margin:       [2, 2, 2, 2],
+                margin:       0,
                 filename:     `Pelan_Susun_Atur_Ihtifal_${yr}_${label}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false, windowWidth: 1280 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false, windowWidth: 1280, scrollY: 0 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape', compress: true }
             };
 
-            html2pdf().from(element).set(opt).save().then(() => {
-                showToast('PDF berjaya dimuat turun!');
+            html2pdf().from(element).set(opt).toPdf().get('pdf').then(function(pdf) {
+                const pageWidth = pdf.internal.pageSize.getWidth();   // 297mm (A4 Landscape)
+                const pageHeight = pdf.internal.pageSize.getHeight(); // 210mm (A4 Landscape)
+                const margin = 4; // 4mm jidar keliling
+                const maxW = pageWidth - (margin * 2);
+                const maxH = pageHeight - (margin * 2);
+
+                const elWidth = element.offsetWidth;
+                const elHeight = element.offsetHeight;
+
+                // Kira nisbah supaya muat lebar DAN tinggi dalam 1 helaian A4
+                const ratio = Math.min(maxW / elWidth, maxH / elHeight);
+                const finalW = elWidth * ratio;
+                const finalH = elHeight * ratio;
+                const offsetX = (pageWidth - finalW) / 2;
+                const offsetY = (pageHeight - finalH) / 2;
+
+                // Bina semula PDF 1 muka surat dengan skala tepat
+                const singlePagePdf = new window.jspdf.jsPDF({
+                    unit: 'mm',
+                    format: 'a4',
+                    orientation: 'landscape',
+                    compress: true
+                });
+
+                const imgData = pdf.output('datauristring');
+                // Ambil kanvas terus dari html2canvas untuk ketajaman maksimum
+                return html2canvas(element, { scale: 2, useCORS: true, logging: false, windowWidth: 1280, scrollY: 0 }).then(function(canvas) {
+                    const canvasImg = canvas.toDataURL('image/jpeg', 0.98);
+                    singlePagePdf.addImage(canvasImg, 'JPEG', offsetX, offsetY, finalW, finalH);
+                    singlePagePdf.save(`Pelan_Susun_Atur_Ihtifal_${yr}_${label}.pdf`);
+                });
+            }).finally(function() {
+                element.classList.remove('pdf-fit-mode');
+                showToast('PDF 1 muka surat A4 berjaya dimuat turun!');
             });
         }
 
