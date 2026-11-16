@@ -93,6 +93,31 @@
             background: #94a3b8;
             border-radius: 3px;
         }
+        /* Besarkan saiz huruf secara menyeluruh pada paparan pelan supaya lebih jelas dibaca & disimpan */
+        #pdf-content .text-\[8px\] {
+            font-size: 11px !important;
+            line-height: 1.35 !important;
+        }
+        #pdf-content .text-\[9px\] {
+            font-size: 12px !important;
+            line-height: 1.35 !important;
+        }
+        #pdf-content .text-\[10px\] {
+            font-size: 13px !important;
+            line-height: 1.4 !important;
+        }
+        #pdf-content input[type="text"] {
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            line-height: 1.4 !important;
+            padding-top: 2px !important;
+            padding-bottom: 2px !important;
+        }
+        #pdf-content textarea {
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            line-height: 1.45 !important;
+        }
     </style>
 </head>
 <body class="min-h-screen p-2 bg-slate-100 text-black font-bold text-[10px]">
@@ -1122,61 +1147,76 @@ function getOrCreateSheet() {
             wrapper.style.position = 'fixed';
             wrapper.style.left = '-10000px';
             wrapper.style.top = '0';
-            wrapper.style.width = '1260px';
+            wrapper.style.width = '1440px';
             wrapper.style.backgroundColor = '#ffffff';
-            wrapper.style.padding = '16px';
+            wrapper.style.padding = '20px';
             wrapper.style.zIndex = '-9999';
 
             const cloneEl = sourceEl.cloneNode(true);
-            cloneEl.style.width = '1228px';
-            cloneEl.style.maxWidth = '1228px';
+            cloneEl.style.width = '1400px';
+            cloneEl.style.maxWidth = '1400px';
             cloneEl.style.margin = '0 auto';
 
             // Buang butang no-print pada klon gambar
             cloneEl.querySelectorAll('.no-print').forEach(el => el.remove());
 
-            // Tukar input teks kepada paparan teks statik supaya tidak terpotong di dalam gambar
+            // Besarkan semua font pada klon gambar supaya sangat jelas dibaca
+            cloneEl.querySelectorAll('.text-\\[8px\\]').forEach(el => {
+                el.style.fontSize = '13px';
+                el.style.lineHeight = '1.35';
+            });
+            cloneEl.querySelectorAll('.text-\\[9px\\]').forEach(el => {
+                el.style.fontSize = '14px';
+                el.style.lineHeight = '1.35';
+            });
+            cloneEl.querySelectorAll('.text-\\[10px\\]').forEach(el => {
+                el.style.fontSize = '15px';
+                el.style.lineHeight = '1.4';
+            });
+
+            // Tukar input teks kepada paparan teks statik besar & hitam pekat supaya tidak terpotong di dalam gambar
             const origInputs = sourceEl.querySelectorAll('input');
             const cloneInputs = cloneEl.querySelectorAll('input');
             origInputs.forEach((inp, idx) => {
                 const cInp = cloneInputs[idx];
                 if (!cInp) return;
-                const val = inp.value || '';
+                const val = (inp.value || '').trim();
                 const span = document.createElement('div');
-                span.textContent = val || (inp.placeholder || '');
+                span.textContent = val;
                 span.className = cInp.className;
-                span.style.minHeight = '18px';
+                span.style.minHeight = '24px';
+                span.style.fontSize = '15px';
+                span.style.fontWeight = '900';
+                span.style.lineHeight = '1.35';
+                span.style.color = '#000000';
                 span.style.display = 'flex';
                 span.style.alignItems = 'center';
+                span.style.whiteSpace = 'normal';
+                span.style.wordBreak = 'break-word';
                 if (inp.id === 'header-year-input' || inp.id === 'plan-year-input') {
                     span.style.justifyContent = 'center';
                     span.style.display = 'inline-flex';
-                }
-                if (!val) {
-                    span.style.color = '#737373';
-                } else {
-                    span.style.color = '#000000';
+                    span.style.fontSize = '20px';
                 }
                 cInp.parentNode.replaceChild(span, cInp);
             });
 
-            // Tukar textarea kepada kotak teks penuh supaya semua nota kelihatan
+            // Tukar textarea kepada kotak teks penuh supaya semua nota kelihatan jelas
             const origTextareas = sourceEl.querySelectorAll('textarea');
             const cloneTextareas = cloneEl.querySelectorAll('textarea');
             origTextareas.forEach((ta, idx) => {
                 const cTa = cloneTextareas[idx];
                 if (!cTa) return;
-                const val = ta.value || '';
+                const val = (ta.value || '').trim();
                 const div = document.createElement('div');
-                div.textContent = val || (ta.placeholder || '');
+                div.textContent = val || '-';
                 div.className = cTa.className;
                 div.style.whiteSpace = 'pre-wrap';
-                div.style.minHeight = '54px';
-                if (!val) {
-                    div.style.color = '#737373';
-                } else {
-                    div.style.color = '#000000';
-                }
+                div.style.minHeight = '64px';
+                div.style.fontSize = '15px';
+                div.style.fontWeight = '800';
+                div.style.lineHeight = '1.45';
+                div.style.color = '#000000';
                 cTa.parentNode.replaceChild(div, cTa);
             });
 
@@ -1185,11 +1225,11 @@ function getOrCreateSheet() {
 
             try {
                 const canvas = await html2canvas(wrapper, {
-                    scale: 2,
+                    scale: 3,
                     useCORS: true,
                     backgroundColor: '#ffffff',
-                    width: 1260,
-                    windowWidth: 1280
+                    width: 1440,
+                    windowWidth: 1440
                 });
 
                 const yearVal = (allSessionsData.eventYear || '2026').trim() || '2026';
